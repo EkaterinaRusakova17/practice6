@@ -7,6 +7,33 @@ namespace MatrixCalculator
         int CompareTo(object obj);
     }
 
+    static class SquareMatrixExtensions
+    {
+        public static SquareMatrix Transpose(this SquareMatrix matrix)
+        {
+            SquareMatrix transposedMatrix = new SquareMatrix(matrix.Size);
+
+            for (int index = 0; index < matrix.Size; ++index)
+            {
+                for (int secondIndex = 0; secondIndex < matrix.Size; ++secondIndex)
+                {
+                    transposedMatrix[index, secondIndex] = matrix[secondIndex, index];
+                }
+            }
+            return transposedMatrix;
+        }
+        public static int Trace(this SquareMatrix matrix)
+        {
+            int trace = 0;
+
+            for (int index = 0; index < matrix.Size; ++index)
+            {
+                trace += matrix[index, index];
+            }
+
+            return trace;
+        }
+    }
     class SquareMatrix : IComparable
     {
         private int[,] matrix;
@@ -156,31 +183,6 @@ namespace MatrixCalculator
             return sum1 < sum2;
         }
 
-        public void Transpose()
-        {
-            for (int index = 0; index < size; ++index)
-            {
-                for (int secondindex = index + 1; secondindex < size; ++secondindex)
-                {
-                    int temp = matrix[index, secondindex];
-                    matrix[index, secondindex] = matrix[secondindex, index];
-                    matrix[secondindex, index] = temp;
-                }
-            }
-        }
-
-        public int Trace()
-        {
-            int sum = 0;
-
-            for (int index = 0; index < size; ++index)
-            {
-                sum += matrix[index, index];
-            }
-
-            return sum;
-        }
-
         public int CompareTo(object obj)
         {
             SquareMatrix other = obj as SquareMatrix;
@@ -224,18 +226,67 @@ namespace MatrixCalculator
         }
     }
 
+    abstract class MatrixHandler
+    {
+        protected MatrixHandler successor;
+
+        public void SetSuccessor(MatrixHandler successor)
+        {
+            this.successor = successor;
+        }
+
+        public abstract void HandleRequest(SquareMatrix matrix);
+    }
+
+    class TransposeHandler : MatrixHandler
+    {
+        public override void HandleRequest(SquareMatrix matrix)
+        {
+            matrix.Transpose();
+            Console.WriteLine("Транспонированная матрица:");
+            PrintMatrix(matrix);
+
+            if (successor != null)
+            {
+                successor.HandleRequest(matrix);
+            }
+        }
+
+        private void PrintMatrix(SquareMatrix matrix)
+        {
+            for (int index = 0; index < matrix.Size; ++index)
+            {
+                for (int secondIndex = 0; secondIndex < matrix.Size; secondIndex++)
+                {
+                    Console.Write(matrix[index, secondIndex] + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine() ;
+        }
+    }
+
+    class TraceHendler : MatrixHandler
+    {
+        public override void HandleRequest(SquareMatrix matrix)
+        {
+            int trace = matrix.Trace();
+            Console.WriteLine("След матрицы:" + trace);
+
+            if (successor != null)
+            {
+                successor.HandleRequest(matrix);
+            }
+        }
+    }
     class Program
     {
         delegate void Diagonalize(SquareMatrix matrix);
-
         static void Main(string[] args)
         {
             SquareMatrix matrix1 = new SquareMatrix(3, true);
             SquareMatrix matrix2 = new SquareMatrix(3, true);
             SquareMatrix matrix3 = matrix1 + matrix2;
-
-            matrix3.Transpose();
-            int trace = matrix3.Trace();
 
             Console.WriteLine("Матрица 1:");
             PrintMatrix(matrix1);
@@ -243,9 +294,13 @@ namespace MatrixCalculator
             PrintMatrix(matrix2);
             Console.WriteLine("Сумма матриц:");
             PrintMatrix(matrix3);
-            Console.WriteLine("Транспонированная матрица 3:");
-            PrintMatrix(matrix3);
-            Console.WriteLine("След матрицы 3: " + trace);
+
+            MatrixHandler transposeHandler = new TransposeHandler();
+            MatrixHandler traceHandler = new TraceHendler();
+
+            transposeHandler.SetSuccessor(traceHandler);
+
+            transposeHandler.HandleRequest(matrix3);
 
             Diagonalize diagonalizer = delegate (SquareMatrix matrix)
             {
