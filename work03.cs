@@ -2,6 +2,38 @@ using System;
 
 namespace MatrixCalculator
 {
+    class ChainApplication
+    {
+        private MatrixHandler firstHandler;
+
+        public ChainApplication()
+        {
+            firstHandler = new TransposeHandler();
+            firstHandler.SetSuccessor(new TraceHandler());
+        }
+
+        public void ProcessRequest(SquareMatrix matrix)
+        {
+            Console.WriteLine("Выберите операцию:");
+            Console.WriteLine("1. Транспонировать матрицу");
+            Console.WriteLine("2. Вычислить след матрицы");
+
+            string choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    firstHandler.HandleRequest(matrix);
+                    break;
+                case "2":
+                    firstHandler.HandleRequest(matrix);
+                    break;
+                default:
+                    Console.WriteLine("Запрос не обработан");
+                    break;
+            }
+        }
+    }
     interface IComparable
     {
         int CompareTo(object obj);
@@ -266,7 +298,7 @@ namespace MatrixCalculator
         }
     }
 
-    class TraceHendler : MatrixHandler
+    class TraceHandler : MatrixHandler
     {
         public override void HandleRequest(SquareMatrix matrix)
         {
@@ -284,6 +316,8 @@ namespace MatrixCalculator
         delegate void Diagonalize(SquareMatrix matrix);
         static void Main(string[] args)
         {
+            ChainApplication app = new ChainApplication();
+
             SquareMatrix matrix1 = new SquareMatrix(3, true);
             SquareMatrix matrix2 = new SquareMatrix(3, true);
             SquareMatrix matrix3 = matrix1 + matrix2;
@@ -295,12 +329,7 @@ namespace MatrixCalculator
             Console.WriteLine("Сумма матриц:");
             PrintMatrix(matrix3);
 
-            MatrixHandler transposeHandler = new TransposeHandler();
-            MatrixHandler traceHandler = new TraceHendler();
-
-            transposeHandler.SetSuccessor(traceHandler);
-
-            transposeHandler.HandleRequest(matrix3);
+            app.ProcessRequest(matrix3);
 
             Diagonalize diagonalizer = delegate (SquareMatrix matrix)
             {
