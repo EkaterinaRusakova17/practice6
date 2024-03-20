@@ -17,16 +17,20 @@ namespace MatrixCalculator
             Console.WriteLine("Выберите операцию:");
             Console.WriteLine("1. Транспонировать матрицу");
             Console.WriteLine("2. Вычислить след матрицы");
+            Console.WriteLine("3. Дагонализировать матрицу");
 
             string choice = Console.ReadLine();
 
             switch (choice)
             {
                 case "1":
-                    firstHandler.HandleRequest(matrix);
+                    firstHandler.HandleRequest(matrix, "transpose");
                     break;
                 case "2":
-                    firstHandler.HandleRequest(matrix);
+                    firstHandler.HandleRequest(matrix, "trace");
+                    break;
+                case "3":
+                    firstHandler.HandleRequest(matrix, "diagonalize");
                     break;
                 default:
                     Console.WriteLine("Запрос не обработан");
@@ -64,6 +68,16 @@ namespace MatrixCalculator
             }
 
             return trace;
+        }
+        public static void Diagonalize(this SquareMatrix matrix)
+        {
+            for (int index = 0; index < matrix.Size; ++index)
+            {
+                for (int secondIndex = 0; secondIndex<matrix.Size; ++secondIndex)
+                {
+                    matrix[index, secondIndex] = 0;
+                }
+            }
         }
     }
     class SquareMatrix : IComparable
@@ -267,20 +281,23 @@ namespace MatrixCalculator
             this.successor = successor;
         }
 
-        public abstract void HandleRequest(SquareMatrix matrix);
+        public abstract void HandleRequest(SquareMatrix matrix, string operation);
     }
 
     class TransposeHandler : MatrixHandler
     {
-        public override void HandleRequest(SquareMatrix matrix)
+        public override void HandleRequest(SquareMatrix matrix, string operation)
         {
-            matrix.Transpose();
-            Console.WriteLine("Транспонированная матрица:");
-            PrintMatrix(matrix);
-
-            if (successor != null)
+            if (operation == "transpose")
             {
-                successor.HandleRequest(matrix);
+                matrix.Transpose();
+                Console.WriteLine("Транспонированная матрица:");
+                PrintMatrix(matrix);
+            }
+
+            else if (successor != null)
+            {
+                successor.HandleRequest(matrix, operation);
             }
         }
 
@@ -300,20 +317,55 @@ namespace MatrixCalculator
 
     class TraceHandler : MatrixHandler
     {
-        public override void HandleRequest(SquareMatrix matrix)
+        public override void HandleRequest(SquareMatrix matrix, string operation)
         {
-            int trace = matrix.Trace();
-            Console.WriteLine("След матрицы:" + trace);
-
-            if (successor != null)
+            if (operation == "trace")
             {
-                successor.HandleRequest(matrix);
+                int trace = matrix.Trace();
+                Console.WriteLine("След матрицы:" + trace);
             }
+
+            else if (successor != null)
+            {
+                successor.HandleRequest(matrix, operation);
+            }
+        }
+    }
+
+    class DiagonalizeHandler : MatrixHandler
+    {
+        public override void HandleRequest(SquareMatrix matrix, string operation)
+        {
+            if (operation == "diagonalize")
+            {
+                matrix.Diagonalize();
+                Console.WriteLine("Диагонализированная матрица:");
+                PrintMatrix(matrix);
+            }
+
+            else if (successor != null)
+            {
+                successor.HandleRequest(matrix, operation);
+            }
+        }
+
+        private void PrintMatrix(SquareMatrix matrix)
+        {
+            for (int index = 0; index < matrix.Size; ++index)
+            {
+                for (int secondindex = 0; secondindex < matrix.Size; ++secondindex)
+                {
+                    Console.Write(matrix[index, secondindex] + " ");
+                }
+
+                Console.WriteLine();
+            }
+
+            Console.WriteLine();
         }
     }
     class Program
     {
-        delegate void Diagonalize(SquareMatrix matrix);
         static void Main(string[] args)
         {
             ChainApplication app = new ChainApplication();
@@ -331,21 +383,8 @@ namespace MatrixCalculator
 
             app.ProcessRequest(matrix3);
 
-            Diagonalize diagonalizer = delegate (SquareMatrix matrix)
-            {
-                for (int index = 1; index < matrix.Size; ++index)
-                {
-                    for (int secondindex = 0; secondindex < index; ++secondindex)
-                    {
-                        matrix[index, secondindex] = 0;
-                    }
-                }
-            };
-
-            diagonalizer(matrix3);
-
             Console.WriteLine("Диагонализация матрицы 3:");
-            PrintMatrix(matrix3);
+            app.ProcessRequest(matrix3);
         }
 
         static void PrintMatrix(SquareMatrix matrix)
