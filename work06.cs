@@ -385,9 +385,6 @@ namespace MatrixCalculator
             PrintMatrix(matrix3);
 
             app.ProcessRequest(matrix3);
-
-            Console.WriteLine("Диагонализация матрицы 3:");
-            app.ProcessRequest(matrix3);
         }
 
         static void PrintMatrix(SquareMatrix matrix)
